@@ -3,20 +3,39 @@ from typing import Sequence
 
 NodeOutput = int | str | Sequence['NodeOutput']
 
-jsonConfig = dict( separators=(',', ':'))
+jsonConfig = dict(separators=(',', ':'))
 
 # region Clases base AST
 
+binary_operators = {
+    "||": "OR",
+    "&&": "AND",
+    "==": "EQ",
+    "!=": "NE",
+    ">=": "GE",
+    "<=": "LE",
+    ">": "GT",
+    "<": "LT",
+    "+": "ADD",
+    "-": "SUB",
+    "*": "MUL",
+    "/": "DIV",
+    "%": "MOD",
+}
+unary_operators ={
+    "!": "NOT",
+    "-": "UMINUS",
+}
 
 
 class AstNode():
     ''' Representa un nodo del AST'''
 
     def __init__(self, name, children):
-        self.name:str = name
+        self.name: str = name
         self.children: list['AstNode'] = children
 
-    def appendChild(self, child:'AstNode') -> 'AstNode':
+    def appendChild(self, child: 'AstNode') -> 'AstNode':
         self.children.append(child)
         return self
 
@@ -62,6 +81,7 @@ class Id(AstLeaf):
 
 # region Literales
 
+
 class ExprLiteral(AstLeaf):
     def __init__(self, name, value):
         AstLeaf.__init__(self, name, value)
@@ -80,8 +100,6 @@ class ExprChar(ExprLiteral):
         ExprLiteral.__init__(self, 'ExprChar', ord(char))
 
 
-
-
 # endregion
 
 
@@ -89,30 +107,37 @@ class ExprVar(AstNode):
     def __init__(self, id: str):
         AstNode.__init__(self, 'ExprVar', [Id(id)])
 
+
 class ExprConstructor(AstNode):
     def __init__(self, id: str):
         AstNode.__init__(self, 'ExprConstructor', [Id(id)])
+
 
 class ExprCase(AstNode):
     def __init__(self, expr: 'Expression', branches: Sequence['CaseBranch']):
         AstNode.__init__(self, 'ExprCase', [expr, CaseBranches(branches)])
 
+
 class CaseBranch(AstNode):
     def __init__(self, id: str, params: Sequence[str], expr: 'Expression'):
         _params = [Id(p) for p in params]
-        AstNode.__init__(self, 'CaseBranch', [Id(id), CaseBranchParams(_params), expr])
+        AstNode.__init__(self, 'CaseBranch', [
+                         Id(id), CaseBranchParams(_params), expr])
+
 
 class CaseBranches(AstNodeCollection):
     def __init__(self, branches: Sequence[CaseBranch]):
         AstNodeCollection.__init__(self, 'CaseBranches', branches)
+
 
 class CaseBranchParams(AstNodeCollection):
     def __init__(self, params: Sequence[Id]):
         AstNodeCollection.__init__(self, 'CaseBranchParams', params)
 
 
-n:Sequence[AstNode] = [AstLeaf('',1)]
-    
+n: Sequence[AstNode] = [AstLeaf('', 1)]
+
+
 class ExprLet(AstNode):
     def __init__(self, id: str, letExpr: 'Expression', inExpr: 'Expression'):
         AstNode.__init__(self, 'ExprLet', [Id(id), letExpr, inExpr])
@@ -130,8 +155,10 @@ class ExprApply(AstNode):
 
 Expression = ExprNumber | ExprApply | ExprCase | ExprChar | ExprConstructor | ExprLambda | ExprLet | ExprVar
 
+
 def buildString(txt) -> Expression:
-    return ExprApply(ExprApply(ExprConstructor('Cons'),ExprChar(txt[0])),buildString(txt[1:])) if txt else ExprConstructor('Nil')
+    return ExprApply(ExprApply(ExprConstructor('Cons'), ExprChar(txt[0])), buildString(txt[1:])) if txt else ExprConstructor('Nil')
+
 
 class Definition(AstNode):
     def __init__(self, id: str, expr: Expression):
@@ -141,9 +168,9 @@ class Definition(AstNode):
 class Program(AstNodeCollection):
     def __init__(self, *args: Definition):
         AstNode.__init__(self, 'Program', [args[0]] if args else [])
-    
-    def append(self, definition:Definition):
-        AstNode.appendChild(self,definition)
+
+    def append(self, definition: Definition):
+        AstNode.appendChild(self, definition)
         return self
 
 

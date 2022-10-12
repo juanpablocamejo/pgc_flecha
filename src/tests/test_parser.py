@@ -5,13 +5,12 @@ import json
 
 from flecha.parser import Parser
 
-
 def testParser():
     p = Parser()
     testData = [
         ('',Program()),
         ('def a = 1', Program(Definition('a',ExprNumber(1)))),
-        ('def a = 1', Program(Definition('a',ExprNumber(1))))
+        ('def a b = 1', Program(Definition('a',ExprLambda('b',ExprNumber(1)))))
     ]
     for t in testData:
         actual, expected = p.parse(t[0]),f'{t[1]}'
