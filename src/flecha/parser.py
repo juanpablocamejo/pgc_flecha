@@ -158,6 +158,6 @@ class Parser():
 
     def p_error(self, p):
         print(f'Syntax error at {p.value!r}')
-
+        
     def parse(self, input):
         return f'{self.__yacc.parse(input, lexer=self.__lex)}'

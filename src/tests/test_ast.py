@@ -46,7 +46,10 @@ def test_ExprStringBuild():
         (buildString("a"), ExprApply(ExprApply(ExprConstructor(
             "Cons"), ExprChar('a')), ExprConstructor("Nil"))),
         (buildString("abc"), ExprApply(
-            ExprApply(ExprConstructor("Cons"), ExprChar('a')), ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('b')), ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('c')), ExprConstructor('Nil'))))),
+            ExprApply(ExprConstructor("Cons"), ExprChar('a')), 
+            ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('b')), 
+            ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('c')), 
+            ExprConstructor('Nil'))))),
     ]
     for data in testData:
         assert data[0] == data[1]
