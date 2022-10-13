@@ -42,21 +42,20 @@ def testExample_03():
 def testExample_04():
     __testExampleFile(4)
 
-
-def testExample_05():
-    __testExampleFile(5)
-
-
-def testExample_06():
-    __testExampleFile(6)
+# def testExample_05():
+#     __testExampleFile(5)
 
 
-def testExample_07():
-    __testExampleFile(7)
+# def testExample_06():
+#     __testExampleFile(6)
 
 
-def testExample_08():
-    __testExampleFile(8)
+# def testExample_07():
+#     __testExampleFile(7)
+
+
+# def testExample_08():
+#     __testExampleFile(8)
 
 
 def __testExampleFile(file_number):
