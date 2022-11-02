@@ -17,3 +17,12 @@ Ejecución de los tests:
 ```console
 py -m pytest -v
 ```
+
+Ejemplos de ejecución del main:
+
+```console
+py src/main.py -tokenize <inputfile>
+```
+```console
+py src/main.py -parse <inputfile>
+```
