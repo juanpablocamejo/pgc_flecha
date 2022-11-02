@@ -3,7 +3,7 @@ from typing import Any
 from flecha.ast import *
 
 
-def testAstBaseClasses():
+def test_ast_base_classes():
     testData: list[tuple[AstNode, Any]] = [
         (AstNode("Label", []), ["Label"]),
         (AstLeaf("Leaf", 1), 1),

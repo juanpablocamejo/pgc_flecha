@@ -1,4 +1,4 @@
-from flecha.ast import Definition, ExprLambda, ExprNumber, Expression, Program, curry, jsonConfig
+from flecha.ast import Definition, ExprApply, ExprChar, ExprConstructor, ExprLambda, ExprNumber, Expression, Program, curry, jsonConfig
 import os
 import glob
 import json
@@ -16,7 +16,6 @@ def testParser():
         actual, expected = p.parse(t[0]),f'{t[1]}'
         assert actual == expected
 
-
 def getExpected(filename) -> str:
     with open(os.path.join(os.getcwd(), filename[0:-5]+'expected'), 'r') as fe:
         return json.dumps(json.loads(fe.read()), **jsonConfig)
@@ -27,27 +26,26 @@ def getInput(filename) -> str:
         return fi.read()
 
 
-def testExample_01():
+def testExample_01_vacio():
     __testExampleFile(1)
 
 
-def testExample_02():
+def testExample_02_numeros():
     __testExampleFile(2)
 
 
-def testExample_03():
+def testExample_03_variables():
     __testExampleFile(3)
 
 
-def testExample_04():
+def testExample_04_constructores():
     __testExampleFile(4)
 
-# def testExample_05():
-#     __testExampleFile(5)
+def testExample_05_caracteres():
+    __testExampleFile(5)
 
-
-# def testExample_06():
-#     __testExampleFile(6)
+def testExample_06_strings():
+    __testExampleFile(6)
 
 
 # def testExample_07():

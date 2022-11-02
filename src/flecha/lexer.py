@@ -3,8 +3,10 @@ from ply.lex import LexToken
 import re
 LexInstance = lex.Lexer
 
-def replace(m): 
+
+def replace(m):
     return Lexer.escaped_chars[m.group('esc')]
+
 
 class Lexer():
     reserved = {
@@ -71,13 +73,13 @@ class Lexer():
     __esc_chars_pattern = re.compile(r"(?P<esc>\\(n|t|r|\\|\'|\"))")
 
     def t_CHAR(self, t):
-        r"\'(?P<value>(\\(n|t|r|\\|\'|\"))|[^\\])\'"
+        r"\'(?P<value>(\\(n|t|r|\\|\'|\"))|[^\\\'])\'"
         val = t.lexer.lexmatch.group('value')
         t.value = Lexer.escaped_chars[val] if val in Lexer.escaped_chars else val
         return t
 
     def t_STRING(self, t):
-        r'\"(?P<value>((\\(n|t|r|\\|\'|\"))|[^\\])*)\"'
+        r'\"(?P<value>((\\(n|t|r|\\|\'|\"))|[^\\\"])*)\"'
         t.value = self.unescapeString(t.lexer.lexmatch.group('value'))
         return t
 

@@ -1,3 +1,4 @@
 {
-    "pythonTestExplorer.testFramework": "pytest"
+    "pythonTestExplorer.testFramework": "pytest",
+    "pylint.importStrategy": "fromEnvironment"
 }

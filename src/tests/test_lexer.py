@@ -1,4 +1,7 @@
+import logging
+import sys
 from flecha.lexer import Lexer
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 testData = {
     "\'\\n\'": [('CHAR', '\n')],
@@ -27,7 +30,8 @@ testData = {
     "/" : [('DIV',"/")],
     "%" : [('MOD',"%")],
     "-- \"\\def a= 1+2\" \n" : [],
-    "True" : [("UPPERID",'True')]
+    "True" : [("UPPERID",'True')],
+    'def a = Cons "" (Cons "" Nil)':[('DEF','def'),('LOWERID','a'),('DEFEQ','='),('UPPERID','Cons'),('STRING',''),('LPAREN','('),('UPPERID','Cons'),('STRING',''),('UPPERID','Nil'),('RPAREN',')')]
 }
 
 
@@ -38,6 +42,7 @@ def testLexer():
         l.input(input)
         while True:
             tok = l.token()
+            logging.debug(tok)
             if not tok:
                 break
             assert (tok.type, tok.value) == expected.pop(0)
