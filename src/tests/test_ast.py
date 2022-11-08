@@ -22,7 +22,7 @@ def testAstSpecificClasses():
         (ExprConstructor('Mk'), ["ExprConstructor", "Mk"]),
         (ExprNumber(1), ["ExprNumber", 1]),
         (ExprChar(chr(22)), ["ExprChar", 22]),
-        (ExprCase(ExprVar('ls'), [CaseBranch('Nil', [], ExprNumber(1))]),
+        (ExprCase(ExprVar('ls'), CaseBranches([CaseBranch('Nil', [], ExprNumber(1))])),
          ["ExprCase", ["ExprVar", "ls"], [["CaseBranch", "Nil", [], ["ExprNumber", 1]]]]),
         (ExprLet('x', ExprVar('y'), ExprVar('z')),
          ["ExprLet", "x", ["ExprVar", "y"], ["ExprVar", "z"]]),
@@ -42,10 +42,10 @@ def test_AstNode_equals():
 
 def test_ExprStringBuild():
     testData = [
-        (buildString(""), ExprConstructor('Nil')),
-        (buildString("a"), ExprApply(ExprApply(ExprConstructor(
+        (build_string(""), ExprConstructor('Nil')),
+        (build_string("a"), ExprApply(ExprApply(ExprConstructor(
             "Cons"), ExprChar('a')), ExprConstructor("Nil"))),
-        (buildString("abc"), ExprApply(
+        (build_string("abc"), ExprApply(
             ExprApply(ExprConstructor("Cons"), ExprChar('a')), 
             ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('b')), 
             ExprApply(ExprApply(ExprConstructor("Cons"), ExprChar('c')), 
@@ -55,5 +55,11 @@ def test_ExprStringBuild():
         assert data[0] == data[1]
 
 def test_Curry():
-   assert curry(['x','y'],ExprNumber(1)) == ExprLambda('x',ExprLambda('y',ExprNumber(1)))
-   assert curry([],ExprNumber(1)) == ExprNumber(1)
+   assert build_lambda(['x','y'],ExprNumber(1)) == ExprLambda('x',ExprLambda('y',ExprNumber(1)))
+   assert build_lambda([],ExprNumber(1)) == ExprNumber(1)
+
+
+def test_ast():
+    actual = f"{ExprCase(ExprVar('x'),CaseBranches([CaseBranch('True',[],ExprVar('y')),CaseBranch('False',[],ExprVar('z'))]))}"
+    expected = '["ExprCase",["ExprVar","x"],[["CaseBranch","True",[],["ExprVar","y"]],["CaseBranch","False",[],["ExprVar","z"]]]]'
+    assert actual == expected

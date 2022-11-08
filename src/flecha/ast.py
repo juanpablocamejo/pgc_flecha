@@ -22,7 +22,7 @@ binary_operators = {
     "/": "DIV",
     "%": "MOD",
 }
-unary_operators ={
+unary_operators = {
     "!": "NOT",
     "-": "UMINUS",
 }
@@ -59,7 +59,7 @@ class AstNodeCollection(AstNode):
         AstNode.__init__(self, name, nodes)
 
     def _output(self) -> NodeOutput:
-        return self._childrenOutput()
+        return self._childrenOutput() if self.children else []
 
 
 class AstLeaf(AstNode):
@@ -114,9 +114,12 @@ class ExprConstructor(AstNode):
 
 
 class ExprCase(AstNode):
-    def __init__(self, expr: 'Expression', branches: Sequence['CaseBranch']):
-        AstNode.__init__(self, 'ExprCase', [expr, CaseBranches(branches)])
-
+    def __init__(self, expr: 'Expression', branches: 'CaseBranches'):
+        AstNode.__init__(self, 'ExprCase', [expr] + branches.children)
+        self.expr = expr
+    
+    def _output(self):
+        return [self.name, self.expr._output(),[c._output() for c in self.children[1:]]]
 
 class CaseBranch(AstNode):
     def __init__(self, id: str, params: Sequence[str], expr: 'Expression'):
@@ -128,6 +131,9 @@ class CaseBranch(AstNode):
 class CaseBranches(AstNodeCollection):
     def __init__(self, branches: Sequence[CaseBranch]):
         AstNodeCollection.__init__(self, 'CaseBranches', branches)
+
+    def append(self, branch: CaseBranch):
+        return self.appendChild(branch)
 
 
 class CaseBranchParams(AstNodeCollection):
@@ -156,8 +162,16 @@ class ExprApply(AstNode):
 Expression = ExprNumber | ExprApply | ExprCase | ExprChar | ExprConstructor | ExprLambda | ExprLet | ExprVar
 
 
-def buildString(txt) -> Expression:
-    return ExprApply(ExprApply(ExprConstructor('Cons'), ExprChar(txt[0])), buildString(txt[1:])) if txt else ExprConstructor('Nil')
+def build_lambda(params: list[str], exp: Expression) -> Expression:
+    return ExprLambda(params[0], build_lambda(params[1:], exp)) if params else exp
+
+
+def build_if(exp: any, t_exp: any, f_exp: any):
+    return ExprCase(exp, CaseBranches([CaseBranch('True', [], t_exp), f_exp]))
+
+
+def build_string(txt) -> Expression:
+    return ExprApply(ExprApply(ExprConstructor('Cons'), ExprChar(txt[0])), build_string(txt[1:])) if txt else ExprConstructor('Nil')
 
 
 class Definition(AstNode):
@@ -172,7 +186,3 @@ class Program(AstNodeCollection):
     def append(self, definition: Definition):
         AstNode.appendChild(self, definition)
         return self
-
-
-def curry(params: list[str], exp: Expression) -> Expression:
-    return ExprLambda(params[0], curry(params[1:], exp)) if params else exp
