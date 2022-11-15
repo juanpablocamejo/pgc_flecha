@@ -19,7 +19,8 @@ class Parser():
         ('nonassoc', 'EQ', 'NE', 'GE', 'LE', 'GT', 'LT'),
         ('left', 'PLUS', 'MINUS'),
         ('left', 'TIMES'),
-        ('left', 'DIV', 'MOD')
+        ('left', 'DIV', 'MOD'),
+        ('right','UMINUS')
     )
 
     def p_program_empty(self, p):
@@ -96,15 +97,14 @@ class Parser():
     def p_lambdaExpression(self, p):
         '''lambdaExpression : LAMBDA parameters ARROW outerExpression'''
         p[0] = build_lambda(p[2],p[4])
- 
 
     def p_innerExpression(self, p):
         '''innerExpression : applyExpression'''
         p[0] = p[1]
 
     def p_innerExpression_binaryOperation(self, p):
-        '''innerExpression : innerExpression binaryOperator innerExpression'''
-        p[0] = ExprApply(ExprApply(ExprVar(p[2]), p[1]), p[3])
+        '''innerExpression : innerExpression binaryOperator applyExpression'''
+        p[0] = ExprApply(ExprApply(ExprVar(binary_operators[p[2]]),p[1]), p[3])
 
     def p_innerExpression_unaryOperation(self, p):
         '''innerExpression : unaryOperator innerExpression'''
@@ -124,11 +124,11 @@ class Parser():
                  | TIMES
                  | DIV
                  | MOD'''
-        p[0] = binary_operators[p[1]]
+        p[0] = p[1]
 
     def p_unaryOperator(self, p):
         '''unaryOperator : NOT
-                         | MINUS'''
+                         | MINUS %prec UMINUS'''
         p[0] = unary_operators[p[1]]
 
     def p_applyExpression_atomic(self, p):

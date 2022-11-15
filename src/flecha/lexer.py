@@ -21,6 +21,7 @@ class Lexer():
         'def': 'DEF'
     }
 
+
     tokens = [
         # Identificadores y constantes
         'LOWERID', 'UPPERID', 'NUMBER', 'CHAR', 'STRING',
