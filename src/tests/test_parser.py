@@ -59,6 +59,31 @@ def testExample_09_applicacion():
 def testExample_10_let():
     __testExampleFile(10)
 
+def testExample_11_lambdas():
+    __testExampleFile(11)
+
+def testExample_12_secuenciacion():
+    __testExampleFile(12)
+
+def testExample_13_anidamiento_est_ctrl():
+    __testExampleFile(13)
+
+def testExample_14_operadores():
+    __testExampleFile(14)
+
+def testExample_15_asociatividad():
+    __testExampleFile(15)
+
+def testExample_16_anidamiento_oper_ap():
+    __testExampleFile(16)
+
+def testExample_17_precedencia():
+    __testExampleFile(17)
+
+def testExample_18_otros():
+    __testExampleFile(18)
+
+
 def __testExampleFile(file_number):
     p = Parser()
     f_num = str.rjust(str(file_number), 2, '0')

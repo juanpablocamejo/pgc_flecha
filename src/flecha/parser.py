@@ -90,11 +90,12 @@ class Parser():
 
     def p_letExpression(self, p):
         '''letExpression : LET LOWERID parameters DEFEQ innerExpression IN outerExpression'''
-        p[0] = ExprLet(p[2], build_lambda(p[3], p[5]), p[6])
+        p[0] = ExprLet(p[2], build_lambda(p[3], p[5]), p[7])
 
     def p_lambdaExpression(self, p):
-        '''lambdaExpression : LAMBDA LOWERID ARROW outerExpression'''
-        p[0] = ExprLambda(p[2], p[4])
+        '''lambdaExpression : LAMBDA parameters ARROW outerExpression'''
+        p[0] = build_lambda(p[2],p[4])
+ 
 
     def p_innerExpression(self, p):
         '''innerExpression : applyExpression'''
