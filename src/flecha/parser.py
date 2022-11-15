@@ -44,11 +44,12 @@ class Parser():
         p[0] = p[1] + [p[2]]
 
     def p_expression_outerExpression(self, p):
-        """ expression : outerExpression"""
+        """ expression : outerExpression
+                       | secuenceExpression """
         p[0] = p[1]
 
     def p_sequence_expression(self, p):
-        '''expression : expression SEMICOLON outerExpression'''
+        '''secuenceExpression : outerExpression SEMICOLON expression'''
         p[0] = ExprLet('_', p[1], p[3])
 
     def p_outerExpression(self, p):
