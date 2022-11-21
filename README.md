@@ -21,11 +21,10 @@ py -m pytest -v
 Ejemplos de ejecución del main:
 
 ```console
-py src/main.py --tokenize <input>
-py src/main.py --tokenize-file <input_file>
-
+py src/main.py --tokenize "def x = 1"
+py src/main.py --tokenize-file "src/tests/examples/test18.input"
 ```
 ```console
-py src/main.py --parse <input>
-py src/main.py --parse-file <input_file>
+py src/main.py --parse "def x = 1"
+py src/main.py --parse-file "src/tests/examples/test18.input"
 ```
