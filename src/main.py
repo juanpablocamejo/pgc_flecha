@@ -1,6 +1,10 @@
+import re
 import sys
 from flecha.lexer import Lexer
 from flecha.parser import Parser
+import json
+
+from flecha.ast import jsonConfig
 
 # region COMMANDS
 
@@ -42,9 +46,9 @@ def print_help():
 
 
 __commands = {
-    '--tokenize': (tokenize_input, ['input_file']),
+    '--tokenize': (tokenize_input, ['input']),
     '--tokenize-file': (tokenize_file, ['input_file']),
-    '--parse': (parse_input, ['"input"']),
+    '--parse': (parse_input, ['input']),
     '--parse-file': (parse_file, ['input_file']),
 }
 
@@ -62,8 +66,6 @@ def main():
         process_command(sys.argv[1], sys.argv[2:])
     else:
         print_help()
-        parse_input('def t10 = let x1 = y1 in z1;let x2 = y2 in z2 ; let x3 = y3 in z3')
-
 
 if __name__ == "__main__":
     main()

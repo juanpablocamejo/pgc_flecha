@@ -1,3 +1,4 @@
+import re
 from flecha.ast import *
 import os
 import glob
@@ -27,18 +28,19 @@ def getInput(filename) -> str:
         return fi.read()
 
 
-def testExample_01_vacio():
+def testExample_00_vacio():
+    __testExampleFile(0)
+
+def testExample_01_numeros():
     __testExampleFile(1)
 
-
-def testExample_02_numeros():
+def testExample_02_variables():
     __testExampleFile(2)
 
-
-def testExample_03_variables():
+def testExample_03_constructores():
     __testExampleFile(3)
 
-def testExample_04_constructores():
+def testExample_04_caracteres():
     __testExampleFile(4)
 
 def testExample_05_caracteres():
@@ -83,7 +85,6 @@ def testExample_17_precedencia():
 def testExample_18_otros():
     __testExampleFile(18)
 
-
 def __testExampleFile(file_number):
     p = Parser()
     f_num = str.rjust(str(file_number), 2, '0')
@@ -91,6 +92,3 @@ def __testExampleFile(file_number):
         os.getcwd() + f'/**/test{f_num}.input', recursive=True)[0]
     input, expected = getInput(filename), getExpected(filename)
     assert p.parse(input) == expected
-
-
-

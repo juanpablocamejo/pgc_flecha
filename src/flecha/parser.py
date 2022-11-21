@@ -2,12 +2,13 @@ from ply.yacc import yacc
 from flecha.lexer import Lexer
 from flecha.ast import *
 
+
 class Parser():
     tokens = Lexer.tokens
 
     def __init__(self):
         self.__lex = Lexer().build()
-        self.__yacc = yacc(module=self, debug=True)
+        self.__yacc = yacc(module=self)
 
     precedence = (
         ('left', 'SEMICOLON'),
@@ -20,7 +21,7 @@ class Parser():
         ('left', 'PLUS', 'MINUS'),
         ('left', 'TIMES'),
         ('left', 'DIV', 'MOD'),
-        ('right','UMINUS')
+        ('right', 'UMINUS'),
     )
 
     def p_program_empty(self, p):
@@ -54,11 +55,11 @@ class Parser():
         p[0] = ExprLet('_', p[1], p[3])
 
     def p_outerExpression(self, p):
-        '''outerExpression :  innerExpression 
-                            | ifExpression
+        '''outerExpression :  ifExpression
                             | letExpression
                             | lambdaExpression
                             | caseExpression
+                            | innerExpression
         '''
         p[0] = p[1]
 
@@ -96,40 +97,40 @@ class Parser():
 
     def p_lambdaExpression(self, p):
         '''lambdaExpression : LAMBDA parameters ARROW outerExpression'''
-        p[0] = build_lambda(p[2],p[4])
+        p[0] = build_lambda(p[2], p[4])
 
     def p_innerExpression(self, p):
-        '''innerExpression : applyExpression'''
+        '''innerExpression : applyExpression
+                           | binaryExpression
+                           | unaryExpression'''
         p[0] = p[1]
 
-    def p_innerExpression_binaryOperation(self, p):
-        '''innerExpression : innerExpression binaryOperator applyExpression'''
-        p[0] = ExprApply(ExprApply(ExprVar(binary_operators[p[2]]),p[1]), p[3])
+    def p_unaryOperation(self, p):
+        '''unaryExpression : NOT innerExpression
+                           | MINUS innerExpression %prec UMINUS'''
+        for key in unary_operators.keys():
+            if p[1] == key:
+                p[0] = build_unary_expression(p[1], p[2])
+                break
 
-    def p_innerExpression_unaryOperation(self, p):
-        '''innerExpression : unaryOperator innerExpression'''
-        p[0] = ExprApply(ExprVar(p[1]), p[2])
-
-    def p_binaryOperator(self, p):
-        '''binaryOperator : AND
-                 | OR
-                 | EQ
-                 | NE
-                 | GE
-                 | LE
-                 | GT
-                 | LT
-                 | PLUS
-                 | MINUS
-                 | TIMES
-                 | DIV
-                 | MOD'''
-        p[0] = p[1]
-
-    def p_unaryOperator(self, p):
-        '''unaryOperator : NOT
-                         | MINUS %prec UMINUS'''
-        p[0] = unary_operators[p[1]]
+    def p_binaryExpression(self, p):
+        ''' binaryExpression : innerExpression AND innerExpression
+                             | innerExpression OR innerExpression
+                             | innerExpression EQ innerExpression
+                             | innerExpression NE innerExpression
+                             | innerExpression GE innerExpression
+                             | innerExpression LE innerExpression
+                             | innerExpression GT innerExpression
+                             | innerExpression LT innerExpression
+                             | innerExpression PLUS innerExpression
+                             | innerExpression MINUS innerExpression
+                             | innerExpression TIMES innerExpression
+                             | innerExpression DIV innerExpression
+                             | innerExpression MOD innerExpression'''
+        for key in binary_operators.keys():
+            if p[2] == key:
+                p[0] = build_binary_expression(p[1], p[2], p[3])
+                break
 
     def p_applyExpression_atomic(self, p):
         '''applyExpression : atomicExpression'''

@@ -59,7 +59,7 @@ def test_Curry():
    assert build_lambda([],ExprNumber(1)) == ExprNumber(1)
 
 
-def test_ast():
+def test_AST():
     actual = f"{ExprCase(ExprVar('x'),CaseBranches([CaseBranch('True',[],ExprVar('y')),CaseBranch('False',[],ExprVar('z'))]))}"
     expected = '["ExprCase",["ExprVar","x"],[["CaseBranch","True",[],["ExprVar","y"]],["CaseBranch","False",[],["ExprVar","z"]]]]'
     assert actual == expected

@@ -8,7 +8,7 @@ def replace(m):
     return Lexer.escaped_chars[m.group('esc')]
 
 
-class Lexer():
+class Lexer(): 
     reserved = {
         'def': 'DEF',
         'if': 'IF',
@@ -20,7 +20,6 @@ class Lexer():
         'in': 'IN',
         'def': 'DEF'
     }
-
 
     tokens = [
         # Identificadores y constantes

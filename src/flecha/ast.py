@@ -161,6 +161,11 @@ class ExprApply(AstNode):
 
 Expression = ExprNumber | ExprApply | ExprCase | ExprChar | ExprConstructor | ExprLambda | ExprLet | ExprVar
 
+def build_binary_expression(expr1: Expression, op:str, expr2: Expression):
+    return ExprApply(ExprApply(ExprVar(binary_operators[op]),expr1), expr2)
+
+def build_unary_expression(op:str, expr: Expression):
+    return ExprApply(ExprVar(unary_operators[op]),expr)
 
 def build_lambda(params: list[str], exp: Expression) -> Expression:
     return ExprLambda(params[0], build_lambda(params[1:], exp)) if params else exp
