@@ -169,4 +169,4 @@ class Parser():
 
     def parse(self, input):
         ast = self.__yacc.parse(input, lexer=self.__lex)
-        return f'{ast}'
+        return ast

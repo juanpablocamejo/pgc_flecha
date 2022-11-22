@@ -1,20 +1,14 @@
-import re
 import sys
+from flecha.eval import Interpreter, LocalEnv
 from flecha.lexer import Lexer
 from flecha.parser import Parser
-import json
 
 from flecha.ast import jsonConfig
 
 # region COMMANDS
 
 def parse_input(input):
-    print("input:",input)
-    print("ast:",Parser().parse(input))
-
-def parse_file(input_file):
-    with open(file=input_file, mode='r', encoding='utf-8',) as file:
-        print(Parser().parse(file.read()))
+    print(Parser().parse(input))
 
 def tokenize_input(input):
     _lex = Lexer().build()
@@ -27,17 +21,22 @@ def tokenize_input(input):
         result.append((tok.type,tok.value))
     print(result)
 
-def tokenize_file(input_file):
+def eval_input(input:str):
+    Interpreter(sys.stdout).eval(Parser().parse(input), LocalEnv())
+
+def read_file(input_file):
     with open(file=input_file, mode='r', encoding='utf-8',) as file:
-        _lex = Lexer().build()
-        _lex.input(file.read())
-        result = []
-        while True:
-            tok = _lex.token()
-            if not tok:
-                break
-            result.append((tok.type,tok.value))
-        print(result)
+        return file.read()
+
+def eval_file(input_file):
+    eval_input(read_file(input_file))
+
+def parse_file(input_file):
+    parse_input(read_file(input_file))
+
+def tokenize_file(input_file):
+    tokenize_input(read_file(input_file))
+
 
 def print_help():
     print("Usage:")
@@ -50,6 +49,8 @@ __commands = {
     '--tokenize-file': (tokenize_file, ['input_file']),
     '--parse': (parse_input, ['input']),
     '--parse-file': (parse_file, ['input_file']),
+    '--eval': (eval_input, ['input']),
+    '--eval-file': (eval_file, ['input']),
 }
 
 # endregion

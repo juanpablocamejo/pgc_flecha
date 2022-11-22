@@ -14,18 +14,8 @@ def testParser():
         ('def a b = 1', Program(Definition('a',ExprLambda('b',ExprNumber(1)))))
     ]
     for t in testData:
-        actual, expected = p.parse(t[0]),f'{t[1]}'
+        actual, expected = f'{p.parse(t[0])}',f'{t[1]}'
         assert actual == expected
-
-
-def getExpected(filename) -> str:
-    with open(os.path.join(os.getcwd(), filename[0:-5]+'expected'), 'r') as fe:
-        return json.dumps(json.loads(fe.read()), **jsonConfig)
-
-
-def getInput(filename) -> str:
-    with open(os.path.join(os.getcwd(), filename), 'r') as fi:
-        return fi.read()
 
 
 def testExample_00_vacio():
@@ -85,10 +75,19 @@ def testExample_17_precedencia():
 def testExample_18_otros():
     __testExampleFile(18)
 
+
+def getInput(filename) -> str:
+    with open(os.path.join(os.getcwd(), filename), 'r') as fi:
+        return fi.read()
+
+def getExpected(filename) -> str:
+    with open(os.path.join(os.getcwd(), filename[0:-5]+'expected'), 'r') as fe:
+        return json.dumps(json.loads(fe.read()), **jsonConfig)
+
 def __testExampleFile(file_number):
     p = Parser()
     f_num = str.rjust(str(file_number), 2, '0')
     filename = glob.glob(
         os.getcwd() + f'/**/test{f_num}.input', recursive=True)[0]
     input, expected = getInput(filename), getExpected(filename)
-    assert p.parse(input) == expected
+    assert f'{p.parse(input)}' == expected

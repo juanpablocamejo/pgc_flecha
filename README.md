@@ -28,3 +28,7 @@ py src/main.py --tokenize-file "src/tests/examples/test18.input"
 py src/main.py --parse "def x = 1"
 py src/main.py --parse-file "src/tests/examples/test18.input"
 ```
+```console
+py src/main.py --eval "def x = 1"
+py src/main.py --eval-file "src/tests/examples/test18.input"
+```

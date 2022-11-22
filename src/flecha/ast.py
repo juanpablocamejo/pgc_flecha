@@ -89,7 +89,6 @@ class ExprLiteral(AstLeaf):
     def _output(self):
         return [self.name, self.value]
 
-
 class ExprNumber(ExprLiteral):
     def __init__(self, value: int):
         ExprLiteral.__init__(self, 'ExprNumber', value)
@@ -107,10 +106,16 @@ class ExprVar(AstNode):
     def __init__(self, id: str):
         AstNode.__init__(self, 'ExprVar', [Id(id)])
 
+    def id(self):
+        return self.children[0].value
+
 
 class ExprConstructor(AstNode):
     def __init__(self, id: str):
         AstNode.__init__(self, 'ExprConstructor', [Id(id)])
+    
+    def id(self):
+        return self.children[0].value
 
 
 class ExprCase(AstNode):
@@ -158,6 +163,12 @@ class ExprApply(AstNode):
     def __init__(self, fn: 'Expression', arg: 'Expression'):
         AstNode.__init__(self, 'ExprApply', [fn, arg])
 
+    def fn(self):
+        return self.children[0]
+
+    def arg(self):
+        return self.children[1]
+
 
 Expression = ExprNumber | ExprApply | ExprCase | ExprChar | ExprConstructor | ExprLambda | ExprLet | ExprVar
 
@@ -183,6 +194,12 @@ class Definition(AstNode):
     def __init__(self, id: str, expr: Expression):
         AstNode.__init__(self, 'Def', [Id(id), expr])
 
+    def id(self):
+        return self.children[0].value
+    
+    def expr(self):
+        return self.children[1]
+
 
 class Program(AstNodeCollection):
     def __init__(self, *args: Definition):
@@ -191,3 +208,6 @@ class Program(AstNodeCollection):
     def append(self, definition: Definition):
         AstNode.appendChild(self, definition)
         return self
+
+    def definitions(self):
+        return self.children
