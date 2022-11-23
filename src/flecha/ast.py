@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 from typing import Sequence
 
@@ -7,24 +8,43 @@ jsonConfig = dict(separators=(',', ':'))
 
 # region Clases base AST
 
+class BinaryOperators(Enum):
+    OR="OR"
+    AND="AND"
+    EQ="EQ"
+    NE="NE"
+    GE="GE"
+    LE="LE"
+    GT="GT"
+    LT="LT"
+    ADD="ADD"
+    SUB="SUB"
+    MUL="MUL"
+    DIV="DIV"
+    MOD="MOD"
+
+class UnaryOperators(Enum):
+    NOT = "NOT"
+    UMINUS ="UMINUS"
+
 binary_operators = {
-    "||": "OR",
-    "&&": "AND",
-    "==": "EQ",
-    "!=": "NE",
-    ">=": "GE",
-    "<=": "LE",
-    ">": "GT",
-    "<": "LT",
-    "+": "ADD",
-    "-": "SUB",
-    "*": "MUL",
-    "/": "DIV",
-    "%": "MOD",
+    "||": BinaryOperators.OR.value,
+    "&&": BinaryOperators.AND.value,
+    "==": BinaryOperators.EQ.value,
+    "!=": BinaryOperators.NE.value,
+    ">=": BinaryOperators.GE.value,
+    "<=": BinaryOperators.LE.value,
+    ">": BinaryOperators.GT.value,
+    "<": BinaryOperators.LT.value,
+    "+": BinaryOperators.ADD.value,
+    "-": BinaryOperators.SUB.value,
+    "*": BinaryOperators.MUL.value,
+    "/": BinaryOperators.DIV.value,
+    "%": BinaryOperators.MOD.value,
 }
 unary_operators = {
-    "!": "NOT",
-    "-": "UMINUS",
+    "!": UnaryOperators.NOT.value,
+    "-": UnaryOperators.UMINUS.value,
 }
 
 
@@ -80,7 +100,6 @@ class Id(AstLeaf):
         AstLeaf.__init__(self, 'Id', value)
 
 # region Literales
-
 
 class ExprLiteral(AstLeaf):
     def __init__(self, name, value):
@@ -153,10 +172,25 @@ class ExprLet(AstNode):
     def __init__(self, id: str, letExpr: 'Expression', inExpr: 'Expression'):
         AstNode.__init__(self, 'ExprLet', [Id(id), letExpr, inExpr])
 
+    def param(self):
+        return self.children[0].value
+
+    def argExpr(self):
+        return self.children[1]
+    
+    def inExpr(self):
+        return self.children[2]
+
 
 class ExprLambda(AstNode):
     def __init__(self, id: str, expr: 'Expression'):
         AstNode.__init__(self, 'ExprLambda', [Id(id), expr])
+    
+    def param(self):
+        return self.children[0].value
+
+    def body(self):
+        return self.children[1]
 
 
 class ExprApply(AstNode):

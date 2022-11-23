@@ -2,7 +2,6 @@ import json
 from typing import Any
 from flecha.ast import *
 
-
 def test_ast_base_classes():
     testData: list[tuple[AstNode, Any]] = [
         (AstNode("Label", []), ["Label"]),

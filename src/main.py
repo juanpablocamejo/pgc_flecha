@@ -1,5 +1,5 @@
 import sys
-from flecha.eval import Interpreter, LocalEnv
+from flecha.interpreter import Interpreter, LocalEnv
 from flecha.lexer import Lexer
 from flecha.parser import Parser
 

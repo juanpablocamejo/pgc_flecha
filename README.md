@@ -24,13 +24,13 @@ Ejemplos de ejecución del main:
 py src/main.py --tokenize "def x = 1"
 ```
 ```console
-py src/main.py --tokenize-file "src/tests/examples/test18.input"
+py src/main.py --tokenize-file "src/tests/parser/examples/test18.input"
 ```
 ```console
 py src/main.py --parse "def x = 1"
 ```
 ```console
-py src/main.py --parse-file "src/tests/examples/test18.input"
+py src/main.py --parse-file "src/tests/parser/examples/test18.input"
 ```
 Work in progress...
 ```console
