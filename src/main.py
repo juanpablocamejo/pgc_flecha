@@ -24,6 +24,7 @@ def tokenize_input(input):
 def eval_input(input:str):
     Interpreter(sys.stdout).eval(Parser().parse(input), LocalEnv())
 
+
 def read_file(input_file):
     with open(file=input_file, mode='r', encoding='utf-8',) as file:
         return file.read()
