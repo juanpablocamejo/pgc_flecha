@@ -22,7 +22,7 @@ def tokenize_input(input):
     print(result)
 
 def eval_input(input:str):
-    Interpreter(sys.stdout).eval(Parser().parse(input), LocalEnv())
+    return Interpreter(sys.stdout).eval(Parser().parse(input), LocalEnv())
 
 
 def read_file(input_file):

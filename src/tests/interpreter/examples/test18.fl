@@ -13,6 +13,6 @@ def main =
   printBool (False && True)  ;
   printBool (False && False) ;
   unsafePrintChar '-'; unsafePrintChar '\n';
-  printBool (True && colgarse 0)
+  printBool (False && colgarse 0)
 
 

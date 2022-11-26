@@ -2,12 +2,18 @@ from enum import Enum
 from typing import Callable, TextIO
 from flecha.ast import *
 
+
+
 class ValueTypes(Enum):
     Int = "Int"
     Char = "Char"
     Closure = "Closure"
     Struct = "Struct"
     Null = "Null"
+
+class Booleans(Enum):
+    TRUE = "True"
+    FALSE = "False"
 
 # region Values
 class Value:
@@ -193,14 +199,13 @@ class Interpreter:
 
     def is_binary_operation(self, ast:ExprApply):
         fn = ast.fn()
-        return is_apply(fn) and is_var(fn.arg()) and fn.arg().id() in binary_operators.values()
+        return is_apply(fn) and is_var(fn.fn()) and fn.fn().id() in binary_operators.values()
 
     def is_struct(self, ast: AstNode) -> bool:
         _curr = ast
         while(_curr.tag == Tags.ExprApply):
             _curr = _curr.fn()
         return _curr.tag == Tags.ExprConstructor
-
 
     def eval_unary_op(self, op: ExprVar, arg:Expression, env:LocalEnv):
         _arg = self.eval(arg,env)
@@ -209,8 +214,35 @@ class Interpreter:
             case Primitives.UNSAFE_PRINT_CHAR.value: return self.eval_print_char(_arg)
             case UnaryOperators.NOT.value: return self.eval_not(_arg)
 
-    def eval_binary_op(self,ast:ExprApply):
-        return VoidValue()
+    def eval_binary_op(self,ast:ExprApply,env:LocalEnv):
+        left = ast.fn().arg()
+        right = ast.arg()
+        binOp : ExprVar = ast.fn().fn()
+        match binOp.id():
+            case BinaryOperators.AND.value: eval_fn = self.eval_and
+            case BinaryOperators.OR.value: eval_fn = self.eval_or
+        return eval_fn(left,right,env)
+
+    def eval_or(self,left: AstNode, right: AstNode,env:LocalEnv):
+        return self.to_bool_struct(self.eval_boolean(left, env) or self.eval_boolean(right, env))
+
+    def eval_and(self,left: AstNode, right: AstNode,env:LocalEnv):
+        return self.to_bool_struct(self.eval_boolean(left, env) and self.eval_boolean(right, env))
+
+    def to_bool_struct(self,b):
+        return StructValue(Booleans.TRUE.value if b else Booleans.FALSE.value,[])
+
+    def eval_boolean(self,val:StructValue, env):
+        val = self.eval(val,env)
+        self.assert_bool(val)
+        return val.ctor == Booleans.TRUE.value
+
+    def is_true(self,val:StructValue):
+        return val.ctor == Booleans.TRUE.value
+
+    def assert_bool(self, val:StructValue):
+        if not (val.type == ValueTypes.Struct.value and val.ctor in [Booleans.TRUE.value,Booleans.FALSE.value]): 
+            raise RuntimeError(f"El valor {val} no se puede evaluar como booleano")
 
     def eval_print_int(self, arg:IntValue):
         assert isinstance(arg, IntValue)
