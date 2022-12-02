@@ -2,14 +2,14 @@ from enum import Enum
 from typing import Callable, TextIO
 from flecha.ast import *
 
-
-
 class ValueTypes(Enum):
     Int = "Int"
     Char = "Char"
     Closure = "Closure"
     Struct = "Struct"
     Null = "Null"
+
+
 
 class Booleans(Enum):
     TRUE = "True"
@@ -19,25 +19,24 @@ class Booleans(Enum):
 class Value:
     def __init__(self):
         self.type = ValueTypes.Null.value
-
 class VoidValue(Value):
     pass
 
-class IntValue(Value):
-    def __init__(self, n) -> None:
-        self.value = n
-        self.type = ValueTypes.Int.value
-    def __repr__(self) -> str:
-        return self.value
-
-class CharValue(Value):
-    def __init__(self, n: int):
-        self.value = chr(n)
-        self.type = ValueTypes.Char.value
+class LiteralValue(Value):
+    def __init__(self, type, v):
+        self.value = v
+        self.type = type.value
 
     def __repr__(self) -> str:
         return self.value
 
+class IntValue(LiteralValue):
+    def __init__(self,v):
+        super().__init__(ValueTypes.Int, v)
+
+class CharValue(LiteralValue):
+    def __init__(self, v:int):
+        super().__init__(ValueTypes.Char, chr(v)) 
 
 class ClosureValue(Value):
     def __init__(self, param, body, env) -> None:
@@ -57,6 +56,10 @@ class StructValue(Value):
 
     def __repr__(self):
         return json.dumps([self.type,self.ctor]+self.args,default=str)
+class BooleanValue(StructValue):
+    def __init__(self,b):
+        super().__init__(Booleans.TRUE.value if b else Booleans.FALSE.value,[])
+
 
 # endregion
 
@@ -100,8 +103,6 @@ class Primitives(Enum):
     UNSAFE_PRINT_INT = 'unsafePrintInt'
     UNSAFE_PRINT_CHAR = 'unsafePrintChar'
 
-
-
 class Interpreter:
     def __init__(self, output:TextIO ) -> None:
         self._global_env = GlobalEnv()
@@ -118,10 +119,27 @@ class Interpreter:
             Tags.ExprLet: self.eval_let,
             Tags.ExprCase: self.eval_case
         }
+        self._relational_ops = {
+            BinaryOperators.EQ.value : lambda x, y: x == y,
+            BinaryOperators.NE.value : lambda x, y: x != y,
+            BinaryOperators.LE.value : lambda x, y: x <= y,
+            BinaryOperators.GE.value : lambda x, y: x >= y,
+            BinaryOperators.LT.value : lambda x, y: x < y,
+            BinaryOperators.GT.value : lambda x, y: x > y,
+        }
+        self._arithmetic_ops = {
+            BinaryOperators.DIV.value : lambda x, y: x // y,
+            BinaryOperators.MOD.value : lambda x, y: x % y,
+            BinaryOperators.SUB.value : lambda x, y: x - y,
+            BinaryOperators.ADD.value : lambda x, y: x + y,
+            BinaryOperators.MUL.value : lambda x, y: x * y,
 
-    def lookup(self, id: str, env: LocalEnv):
-        val = env.lookup(id)
-        return self._global_env.lookup(id) if (val is None) else val
+        }
+        self._logical_ops = {
+            BinaryOperators.AND.value : self.eval_and,
+            BinaryOperators.OR.value : self.eval_or
+        }
+
 
     def eval(self, ast: AstNode, env: LocalEnv) -> Value:
         if ast.tag in self._eval_map: 
@@ -147,7 +165,7 @@ class Interpreter:
     def eval_number(self, ast: ExprNumber, env) -> IntValue:
         return IntValue(ast.value)
 
-    def eval_char(self, ast: ExprNumber,env) -> CharValue:
+    def eval_char(self, ast: ExprNumber, env) -> CharValue:
         return CharValue(ast.value)
    
     def eval_lambda(self, ast: ExprLambda, env:LocalEnv) -> ClosureValue:
@@ -181,6 +199,61 @@ class Interpreter:
             if is_match : return self.eval(b.expr(), new_env)
         raise RuntimeError(f"Error al intentar matchear la expresión: {val}")
 
+# unary operations
+    def eval_unary_op(self, op: ExprVar, exp:Expression, env:LocalEnv):
+        match op.id():
+            case Primitives.UNSAFE_PRINT_INT.value: return self.eval_print_int(exp, env)
+            case Primitives.UNSAFE_PRINT_CHAR.value: return self.eval_print_char(exp, env)
+            case UnaryOperators.NOT.value: return self.eval_not(exp, env)
+            case UnaryOperators.UMINUS.value: return self.eval_uminus(exp, env)
+
+    def eval_not(self, exp:AstNode, env:LocalEnv):
+        return BooleanValue(not self.eval_as_boolean(exp,env))
+
+    def eval_uminus(self,exp:AstNode,env):
+        return IntValue(-self.eval_as_number(exp,env))
+
+    def eval_print_int(self, exp:AstNode, env):
+        self._output.write(f'{self.eval_as_number(exp,env)}')
+        return VoidValue()
+
+    def eval_print_char(self, exp:AstNode, env):
+        self._output.write(f'{self.eval_as_char(exp,env)}')
+        return VoidValue()
+
+#binary operations
+    def eval_binary_op(self, ast:ExprApply, env:LocalEnv):
+        left = ast.fn().arg()
+        right = ast.arg()
+        binOp : ExprVar = ast.fn().fn().id()
+        if binOp in self._relational_ops: eval_fn = self.eval_relational_op
+        elif binOp in self._arithmetic_ops: eval_fn = self.eval_arithmetic_op
+        elif binOp in self._logical_ops: eval_fn = self.eval_logical_op
+        else: raise RuntimeError(f"Operación no reconocida: {binOp}")
+        return eval_fn(left, binOp, right, env)
+
+    def eval_relational_op(self,left: AstNode, op:str, right: AstNode, env:LocalEnv):
+        vL,vR = self.assert_numeric_operation(left, op, right, env)
+        return BooleanValue(self._relational_ops[op](vL,vR))
+
+    def eval_arithmetic_op(self,left: AstNode, op:str, right: AstNode, env:LocalEnv):
+        vL,vR = self.assert_numeric_operation(left, op, right, env)
+        return IntValue(self._arithmetic_ops[op](vL,vR))
+
+    def eval_logical_op(self,left: AstNode, op:str, right: AstNode,env:LocalEnv):
+        return self._logical_ops[op](left,right,env)
+
+    def eval_or(self,left: AstNode, right: AstNode,env:LocalEnv):
+        return BooleanValue(self.eval_as_boolean(left, env) or self.eval_as_boolean(right, env))
+
+    def eval_and(self,left: AstNode, right: AstNode,env:LocalEnv):
+        return BooleanValue(self.eval_as_boolean(left, env) and self.eval_as_boolean(right, env))
+
+#aux
+    def lookup(self, id: str, env: LocalEnv):
+        val = env.lookup(id)
+        return self._global_env.lookup(id) if (val is None) else val
+
     def match(self, val:Value, b:CaseBranch, env:LocalEnv):
         return self.match_struct(val,b,env) if (val.type == ValueTypes.Struct.value) else (val.type==b.id(), env)
 
@@ -191,15 +264,14 @@ class Interpreter:
             for i,p in enumerate(b.params()):
                 _new_env = _new_env.extend(p,val.args[i])
         return (_is_match, _new_env)
-
     
     def is_unary_operation(self, ast:ExprApply):
         fn = ast.fn()
-        return is_var(fn) and (fn.id() in [p.value for p in Primitives] or fn.id() in unary_operators.values())
+        return self.is_var_expr(fn) and (fn.id() in [p.value for p in Primitives] or fn.id() in unary_operators.values())
 
     def is_binary_operation(self, ast:ExprApply):
         fn = ast.fn()
-        return is_apply(fn) and is_var(fn.fn()) and fn.fn().id() in binary_operators.values()
+        return self.is_app_expr(fn) and self.is_var_expr(fn.fn()) and fn.fn().id() in binary_operators.values()
 
     def is_struct(self, ast: AstNode) -> bool:
         _curr = ast
@@ -207,61 +279,40 @@ class Interpreter:
             _curr = _curr.fn()
         return _curr.tag == Tags.ExprConstructor
 
-    def eval_unary_op(self, op: ExprVar, arg:Expression, env:LocalEnv):
-        _arg = self.eval(arg,env)
-        match op.id():
-            case Primitives.UNSAFE_PRINT_INT.value: return self.eval_print_int(_arg)
-            case Primitives.UNSAFE_PRINT_CHAR.value: return self.eval_print_char(_arg)
-            case UnaryOperators.NOT.value: return self.eval_not(_arg)
+    def assert_numeric_operation(self, left, op, right, env):
+        try:
+            vL = self.eval_as_number(left, env)
+            vR = self.eval_as_number(right, env)
+        except:
+            raise RuntimeError(f"El operador {op} solo se puede usar con números")
+        return(vL,vR)    
 
-    def eval_binary_op(self,ast:ExprApply,env:LocalEnv):
-        left = ast.fn().arg()
-        right = ast.arg()
-        binOp : ExprVar = ast.fn().fn()
-        match binOp.id():
-            case BinaryOperators.AND.value: eval_fn = self.eval_and
-            case BinaryOperators.OR.value: eval_fn = self.eval_or
-        return eval_fn(left,right,env)
+    def eval_as_number(self,val:IntValue, env) -> int:
+        val = self.eval(val,env)
+        self.assert_number(val)
+        return val.value
 
-    def eval_or(self,left: AstNode, right: AstNode,env:LocalEnv):
-        return self.to_bool_struct(self.eval_boolean(left, env) or self.eval_boolean(right, env))
+    def assert_number(self, val:IntValue):
+        if val.type != ValueTypes.Int.value: 
+            raise RuntimeError(f"El valor {val} no se puede evaluar como número")
 
-    def eval_and(self,left: AstNode, right: AstNode,env:LocalEnv):
-        return self.to_bool_struct(self.eval_boolean(left, env) and self.eval_boolean(right, env))
-
-    def to_bool_struct(self,b):
-        return StructValue(Booleans.TRUE.value if b else Booleans.FALSE.value,[])
-
-    def eval_boolean(self,val:StructValue, env):
+    def eval_as_boolean(self,val:StructValue, env):
         val = self.eval(val,env)
         self.assert_bool(val)
-        return val.ctor == Booleans.TRUE.value
-
-    def is_true(self,val:StructValue):
         return val.ctor == Booleans.TRUE.value
 
     def assert_bool(self, val:StructValue):
         if not (val.type == ValueTypes.Struct.value and val.ctor in [Booleans.TRUE.value,Booleans.FALSE.value]): 
             raise RuntimeError(f"El valor {val} no se puede evaluar como booleano")
 
-    def eval_print_int(self, arg:IntValue):
-        assert isinstance(arg, IntValue)
-        self._output.write(f'{arg.value}')
-        return VoidValue()
+    def eval_as_char(self,exp,env):
+        v = self.eval(exp,env)
+        if v.type != ValueTypes.Char.value:
+            raise RuntimeError(f"El valor {v} no se puede evaluar como char")
+        return v.value
 
-    def eval_print_char(self, arg:CharValue):
-        assert isinstance(arg, CharValue)
-        self._output.write(f'{arg.value}')
-        return VoidValue()
-    
-    def eval_add(self, expr1, expr2, l_env, g_env):
-        val1 = expr1.eval(l_env, g_env)
-        val2 = expr2.eval(l_env, g_env)
-        assert isinstance(val1, IntValue) and isinstance(val2, IntValue)
-        return IntValue(val1.value + val2.value)
-
-def is_apply(ast:AstNode):
-    return isinstance(ast, ExprApply)
-        
-def is_var(ast:AstNode):
-    return isinstance(ast, ExprVar)
+    def is_app_expr(self,ast:AstNode):
+        return ast.tag == Tags.ExprApply
+            
+    def is_var_expr(self,ast:AstNode):
+        return ast.tag == Tags.ExprVar
