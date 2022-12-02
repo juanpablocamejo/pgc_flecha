@@ -32,7 +32,6 @@ py src/main.py --parse "def x = 1"
 ```console
 py src/main.py --parse-file "src/tests/parser/examples/test18.input"
 ```
-Work in progress...
 ```console
 py src/main.py --eval "def x = 1"
 ```
