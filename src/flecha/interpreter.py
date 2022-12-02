@@ -9,8 +9,6 @@ class ValueTypes(Enum):
     Struct = "Struct"
     Null = "Null"
 
-
-
 class Booleans(Enum):
     TRUE = "True"
     FALSE = "False"
@@ -174,10 +172,9 @@ class Interpreter:
     def eval_apply(self, ast: ExprApply, env:LocalEnv) -> Value:
         if self.is_unary_operation(ast): return self.eval_unary_op(ast.fn(), ast.arg(), env)
         elif self.is_binary_operation(ast): return self.eval_binary_op(ast, env)
-        elif self.is_struct(ast): return self.eval_struct(ast,env)
+        elif self.is_struct_expr(ast): return self.eval_struct(ast,env)
         _arg = self.eval(ast.arg(), env)
-        _cl: ClosureValue = self.eval(ast.fn(), env)
-        assert isinstance(_cl, ClosureValue)
+        _cl: ClosureValue = self.eval_as_closure(ast.fn(),env)
         return self.eval(_cl.body, _cl.env.extend(_cl.param, _arg))
 
     def eval_constructor(self, ast:ExprConstructor, env):
@@ -264,7 +261,7 @@ class Interpreter:
             for i,p in enumerate(b.params()):
                 _new_env = _new_env.extend(p,val.args[i])
         return (_is_match, _new_env)
-    
+           
     def is_unary_operation(self, ast:ExprApply):
         fn = ast.fn()
         return self.is_var_expr(fn) and (fn.id() in [p.value for p in Primitives] or fn.id() in unary_operators.values())
@@ -273,11 +270,17 @@ class Interpreter:
         fn = ast.fn()
         return self.is_app_expr(fn) and self.is_var_expr(fn.fn()) and fn.fn().id() in binary_operators.values()
 
-    def is_struct(self, ast: AstNode) -> bool:
+    def is_struct_expr(self, ast: AstNode) -> bool:
         _curr = ast
         while(_curr.tag == Tags.ExprApply):
             _curr = _curr.fn()
         return _curr.tag == Tags.ExprConstructor
+
+    def is_app_expr(self,ast:AstNode):
+        return ast.tag == Tags.ExprApply
+            
+    def is_var_expr(self,ast:AstNode):
+        return ast.tag == Tags.ExprVar
 
     def assert_numeric_operation(self, left, op, right, env):
         try:
@@ -287,21 +290,30 @@ class Interpreter:
             raise RuntimeError(f"El operador {op} solo se puede usar con números")
         return(vL,vR)    
 
-    def eval_as_number(self,val:IntValue, env) -> int:
-        val = self.eval(val,env)
-        self.assert_number(val)
+    def eval_as_number(self, exp:AstNode, env) -> int:
+        val = self.eval(exp,env)
+        self.assert_number_val(val)
         return val.value
 
-    def assert_number(self, val:IntValue):
+    def eval_as_closure(self, exp:AstNode, env) -> int:
+        val = self.eval(exp, env)
+        self.assert_closure_val(val)
+        return val
+
+    def eval_as_boolean(self, exp:AstNode, env):
+        val = self.eval(exp, env)
+        self.assert_bool_val(val)
+        return val.ctor == Booleans.TRUE.value
+    
+    def assert_number_val(self, val:IntValue):
         if val.type != ValueTypes.Int.value: 
             raise RuntimeError(f"El valor {val} no se puede evaluar como número")
 
-    def eval_as_boolean(self,val:StructValue, env):
-        val = self.eval(val,env)
-        self.assert_bool(val)
-        return val.ctor == Booleans.TRUE.value
+    def assert_closure_val(self, val:ClosureValue):
+        if val.type != ValueTypes.Closure.value: 
+            raise RuntimeError(f"El valor {val} no se puede evaluar como closure")
 
-    def assert_bool(self, val:StructValue):
+    def assert_bool_val(self, val:StructValue):
         if not (val.type == ValueTypes.Struct.value and val.ctor in [Booleans.TRUE.value,Booleans.FALSE.value]): 
             raise RuntimeError(f"El valor {val} no se puede evaluar como booleano")
 
@@ -310,9 +322,3 @@ class Interpreter:
         if v.type != ValueTypes.Char.value:
             raise RuntimeError(f"El valor {v} no se puede evaluar como char")
         return v.value
-
-    def is_app_expr(self,ast:AstNode):
-        return ast.tag == Tags.ExprApply
-            
-    def is_var_expr(self,ast:AstNode):
-        return ast.tag == Tags.ExprVar
