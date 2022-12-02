@@ -36,5 +36,5 @@ py src/main.py --parse-file "src/tests/parser/examples/test18.input"
 py src/main.py --eval "def x = 1"
 ```
 ```console
-py src/main.py --eval-file "src/tests/examples/test18.input"
+py src/main.py --eval-file "src/tests/interpreter/examples/test31.fl"
 ```
